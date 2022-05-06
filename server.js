@@ -9,6 +9,7 @@ const app = express();
 app.use(express.static("public"));
 
 // Middleware
+app.use(express.json());
 app.use("/api", api);
 
 // GET Route for notes page
