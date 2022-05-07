@@ -2,17 +2,15 @@ const notes = require("express").Router();
 const fs = require("fs");
 const { v4: uuidv4 } = require("uuid");
 const file = "./db/db.json";
+const {
+  promiseReadFile,
+  writeFile,
+  readAndWrite,
+} = require("../helpers/fsUtils");
 
 // GET Route for a note
 notes.get("/notes", (req, res) => {
-  fs.readFile(file, "utf8", (err, data) => {
-    if (err) {
-      console.log(err);
-    } else {
-      const parsedData = JSON.parse(data);
-      res.json(parsedData);
-    }
-  });
+  promiseReadFile(file).then((data) => res.json(JSON.parse(data)));
 });
 
 // POST Route for a new note
@@ -27,18 +25,7 @@ notes.post("/notes", (req, res) => {
       id: uuidv4(),
     };
 
-    fs.readFile(file, "utf8", function (err, data) {
-      if (err) {
-        console.error(err);
-      } else {
-        const parsedData = JSON.parse(data);
-        parsedData.push(newNote);
-
-        fs.writeFile(file, JSON.stringify(parsedData), (err) =>
-          err ? console.error(err) : console.info(`\nData written to ${file}`)
-        );
-      }
-    });
+    readAndWrite(file, newNote);
     res.json("Note added successfully");
   } else {
     res.error("Error in adding note");
@@ -49,17 +36,15 @@ notes.post("/notes", (req, res) => {
 notes.delete("/notes/:id", (req, res) => {
   const noteId = req.params.id;
 
-  fs.readFile(file, "utf8", function (err, data) {
-    const parsedData = JSON.parse(data);
+  promiseReadFile(file)
+    .then((data) => JSON.parse(data))
+    .then((jsonData) => {
+      const newData = jsonData.filter((note) => note.id !== noteId);
 
-    const result = parsedData.filter((note) => note.id !== noteId);
+      writeFile(file, newData);
 
-    fs.writeFile(file, JSON.stringify(result), (err) =>
-      err ? console.error(err) : console.info(`\nData written to ${file}`)
-    );
-  });
-
-  res.json(`Note ${noteId} has been deleted`);
+      res.json(`Note ${noteId} has been deleted`);
+    });
 });
 
 module.exports = notes;
