@@ -3,6 +3,7 @@ const fs = require("fs");
 const { v4: uuidv4 } = require("uuid");
 const file = "./db/db.json";
 
+// GET Route for a note
 notes.get("/notes", (req, res) => {
   fs.readFile(file, "utf8", (err, data) => {
     if (err) {
@@ -14,6 +15,7 @@ notes.get("/notes", (req, res) => {
   });
 });
 
+// POST Route for a new note
 notes.post("/notes", (req, res) => {
   console.log(req.body);
   const { title, text } = req.body;
@@ -41,6 +43,23 @@ notes.post("/notes", (req, res) => {
   } else {
     res.error("Error in adding note");
   }
+});
+
+// DELETE Route for a specific note
+notes.delete("/notes/:id", (req, res) => {
+  const noteId = req.params.id;
+
+  fs.readFile(file, "utf8", function (err, data) {
+    const parsedData = JSON.parse(data);
+
+    const result = parsedData.filter((note) => note.id !== noteId);
+
+    fs.writeFile(file, JSON.stringify(result), (err) =>
+      err ? console.error(err) : console.info(`\nData written to ${file}`)
+    );
+  });
+
+  res.json(`Note ${noteId} has been deleted`);
 });
 
 module.exports = notes;
